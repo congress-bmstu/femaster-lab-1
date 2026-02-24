@@ -19,6 +19,8 @@
           name = "femaster-lab-1";
           NIX_CONFIG = "experimental-features = nix-command flakes";
           shellHook = ''
+            export CC=clang
+            export CXX=clang++
           '';
           nativeBuildInputs = with pkgs; [
             lldb

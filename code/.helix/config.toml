@@ -1,0 +1,4 @@
+[keys.normal]
+F1 = ":sh just run"
+F2 = ":sh just build"
+F3 = ":sh just clean"

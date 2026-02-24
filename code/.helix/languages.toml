@@ -1,0 +1,17 @@
+[[language]]
+language-servers = ["ccls", "typos"]
+name = "cpp"
+roots = ["compile-commands.json", ".ccls"]
+scope = "source.cpp"
+
+[language.formatter]
+args = ["--style=file"]
+command = "clang-format"
+
+[language.indent]
+tab-width = 2
+unit = "  "
+
+[language-server.ccls]
+args = ["--init={\n\"index\": {\"threads\": 8}\n}\n"]
+command = "ccls"
