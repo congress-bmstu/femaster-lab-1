@@ -1,0 +1,25 @@
+default:
+    just --list
+
+[working-directory: ""]
+generate-mesh:
+    gmsh geometry.geo -2 -format msh2 -o mesh.msh
+
+[working-directory: "build"]
+cmake:
+    cmake ..
+
+[working-directory: "build"]
+build: cmake
+    make -j$(nproc --all)
+
+run: build
+    ./build/cpp_project
+
+[working-directory: "build"]
+clean:
+    make clean -j$(nproc --all)
+
+[working-directory: "build"]
+distclean:
+    -rm * .* -rf

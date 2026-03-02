@@ -1,0 +1,35 @@
+# Конфигурация задачи МКЭ - безвихревое обтекание цилиндра
+
+mesh_file: "mesh.msh"
+output_file: "result.vtu"
+
+problem:
+  U_inf: 40.0    # Скорость набегающего потока (мм/с)
+  H: 80.0        # Расстояние между стенками (мм)
+  D: 40.0        # Диаметр цилиндра (мм)
+
+boundary_conditions:
+  - group: "Wall_Up"
+    type: "Dirichlet"
+    value: 0.0   # Будет переопределено кодом (0 и Q)
+
+  - group: "Wall_Down"
+    type: "Dirichlet"
+    value: 3600
+  
+  - group: "Cylinder"
+    type: "Dirichlet"
+    value: 1800   # Будет переопределено кодом (Q/2)
+  
+  - group: "Inlet"
+    type: "Neumann"
+    value: 0.0   # ∂ψ/∂n = 0
+  
+  - group: "Outlet"
+    type: "Neumann"
+    value: 0.0   # ∂ψ/∂n = 0
+
+solver:
+  type: "Direct"        # Direct или CG
+  max_iterations: 1000
+  tolerance: 1.0e-10

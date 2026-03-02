@@ -2,3 +2,7 @@ code/.direnv
 code/build
 code/compile_commands.json
 .ccls-cache
+gpt-code/build
+gpt-code/mesh.msh
+gpt-code/result.vtu
+report/report.pdf
