@@ -30,6 +30,6 @@ boundary_conditions:
     value: 0.0   # ∂ψ/∂n = 0
 
 solver:
-  type: "Direct"        # Direct или CG
+  type: "Iterative"        # Direct или CG
   max_iterations: 1000
   tolerance: 1.0e-10

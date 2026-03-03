@@ -105,7 +105,7 @@ bool Mesh::parseElements(std::ifstream& file) {
 
             for(int tagIndex = 0; tagIndex < tags.size(); ++tagIndex) {
                 nodes_[ nodeIndexMap_[nodeIds[0]] ].addTag(tags[tagIndex]);
-                nodes_[ nodeIndexMap_[nodeIds[0]] ].addTag(tags[tagIndex]);
+                nodes_[ nodeIndexMap_[nodeIds[1]] ].addTag(tags[tagIndex]);
             }
         }
 

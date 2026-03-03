@@ -4,7 +4,7 @@ R = D/2;          // Радиус
 H = 80;           // Высота канала
 L = 200;          // Длина области (достаточно далеко от цилиндра)
 U_inf = 40;       // Скорость набегающего потока
-mesh_size = 100.0;  // Размер сетки около границ
+mesh_size = 10.0;  // Размер сетки около границ
 
 // Точки
 Point(1) = {-L, 0, 0, mesh_size};       // Левый нижний
@@ -39,7 +39,7 @@ Physical Line("Outlet") = {2};
 Physical Line("Wall_Up") = {1};
 Physical Line("Wall_Down") = {3};
 Physical Line("Cylinder") = {10, 11, 12, 13};
-Physical Surface("Fluid") = {100};
+// Physical Surface("Fluid") = {100};
 
 // Генерация 2D сетки (Треугольники)
 Mesh 2;

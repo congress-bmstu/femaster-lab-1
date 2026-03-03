@@ -121,21 +121,13 @@ SolutionResult FEMSolver::solve() {
         result.iterations = 1;  // Прямой метод
         
     } else {
-        // Итерационный метод (CG)
-        Eigen::ConjugateGradient<
-            Eigen::SparseMatrix<double>,
-            Eigen::Lower | Eigen::Upper
-        > solver;
-        
-        solver.setMaxIterations(config_->getSolverConfig().maxIterations);
-        solver.setTolerance(config_->getSolverConfig().tolerance);
-        
-        solver.compute(K_);
-        psi_ = solver.solve(F_);
-        
-        result.success = (solver.info() == Eigen::Success);
-        result.iterations = solver.iterations();
-        result.residual = solver.error();
+        // Итерационный метод
+        Eigen::BiCGSTAB<Eigen::SparseMatrix<double> > bicgstab_solver;
+        bicgstab_solver.compute(K_);
+        psi_ = bicgstab_solver.solve(F_);
+        result.success = (bicgstab_solver.info() == Eigen::Success);
+        result.iterations = bicgstab_solver.iterations();
+        result.residual = bicgstab_solver.error();
     }
     
     result.solveTime = timer.elapsed();
