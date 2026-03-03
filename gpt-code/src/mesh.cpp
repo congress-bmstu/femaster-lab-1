@@ -90,7 +90,6 @@ bool Mesh::parseElements(std::ifstream& file) {
         
         std::vector<int> tags;
 
-        // Пропускаем теги
         for (int j = 0; j < numTags; ++j) {
             int tag;
             iss >> tag;
@@ -103,7 +102,7 @@ bool Mesh::parseElements(std::ifstream& file) {
                 iss >> nodeIds[j];
             }
 
-            for(int tagIndex = 0; tagIndex < tags.size(); ++tagIndex) {
+            for(int tagIndex = 0; tagIndex < 1; ++tagIndex) {
                 nodes_[ nodeIndexMap_[nodeIds[0]] ].addTag(tags[tagIndex]);
                 nodes_[ nodeIndexMap_[nodeIds[1]] ].addTag(tags[tagIndex]);
             }
@@ -120,7 +119,14 @@ bool Mesh::parseElements(std::ifstream& file) {
     }
 
     Logger::info("Загружено "+std::to_string(numElements)+" элементов!");
-    
+   
+    for(auto &[nodeId, idx] : nodeIndexMap_) {
+        Logger::info("В ноде " + std::to_string(nodeId) + " физические группы: ");
+        for(auto tag : nodes_[idx].getTags()) {
+            Logger::info(std::to_string(tag));
+        }
+    }
+
     std::getline(file, line); // $EndElements
     return true;
 }
@@ -155,18 +161,18 @@ bool Mesh::parsePhysicalGroups(std::ifstream& file) {
                 group.dimension = dim;
                 physicalGroups_[name] = group;
             }
-
-            Logger::info("Загружено "+std::to_string(numGroups)+" физических групп!");
-            
             std::getline(file, line); // $EndPhysicalNames
+                                      
+            Logger::info("Загружено "+std::to_string(numGroups)+" физических групп!");
+            for(auto &[name, group] : physicalGroups_) {
+                Logger::info("Группа " + name + " имеет тэг " + std::to_string(group.tag));
+            }
             break;
         }
         if (line.find("$EndElements") != std::string::npos) {
             break;
         }
     }
-
-
     
     return true;
 }

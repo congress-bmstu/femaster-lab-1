@@ -9,17 +9,17 @@ problem:
   D: 40.0        # Диаметр цилиндра (мм)
 
 boundary_conditions:
-  - group: "Wall_Up"
-    type: "Dirichlet"
-    value: 0.0   # Будет переопределено кодом (0 и Q)
-
   - group: "Wall_Down"
+    type: "Dirichlet"
+    value: 0.0
+
+  - group: "Wall_Up"
     type: "Dirichlet"
     value: 3600
   
   - group: "Cylinder"
     type: "Dirichlet"
-    value: 1800   # Будет переопределено кодом (Q/2)
+    value: 1800
   
   - group: "Inlet"
     type: "Neumann"
