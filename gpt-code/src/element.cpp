@@ -10,12 +10,12 @@ Element::Element(int id, const std::vector<int>& nodeIds)
     }
 }
 
-void Element::computeGeometry(const std::vector<Node>& nodes) {
+void Element::computeGeometry(const std::vector<Node>& nodes, const std::unordered_map<int, int> &nodeIndexMap) {
     if (nodeIds_.size() != 3) return;
     
-    const Node& n1 = nodes[nodeIds_[0]];
-    const Node& n2 = nodes[nodeIds_[1]];
-    const Node& n3 = nodes[nodeIds_[2]];
+    const Node& n1 = nodes[ nodeIndexMap.at(nodeIds_[0]) ];
+    const Node& n2 = nodes[ nodeIndexMap.at(nodeIds_[1]) ];
+    const Node& n3 = nodes[ nodeIndexMap.at(nodeIds_[2]) ];
     
     // Площадь треугольника через определитель
     // S = 0.5 * |x1(y2-y3) + x2(y3-y1) + x3(y1-y2)|
@@ -29,15 +29,15 @@ void Element::computeGeometry(const std::vector<Node>& nodes) {
 }
 
 Eigen::Matrix<double, 2, 3> Element::computeShapeFunctionGradients(
-    const std::vector<Node>& nodes) const {
+    const std::vector<Node>& nodes, const std::unordered_map<int, int> &nodeIndexMap) const {
     
     Eigen::Matrix<double, 2, 3> gradN;
     
     if (nodeIds_.size() != 3) return gradN;
-    
-    const Node& n1 = nodes[nodeIds_[0]];
-    const Node& n2 = nodes[nodeIds_[1]];
-    const Node& n3 = nodes[nodeIds_[2]];
+        
+    const Node& n1 = nodes[ nodeIndexMap.at(nodeIds_[0]) ];
+    const Node& n2 = nodes[ nodeIndexMap.at(nodeIds_[1]) ];
+    const Node& n3 = nodes[ nodeIndexMap.at(nodeIds_[2]) ];
     
     double x1 = n1.getX(), y1 = n1.getY();
     double x2 = n2.getX(), y2 = n2.getY();
@@ -47,7 +47,7 @@ Eigen::Matrix<double, 2, 3> Element::computeShapeFunctionGradients(
     double detJ = x1*(y2 - y3) - x2*(y1 - y3) + x3*(y1 - y2);
     
     if (std::abs(detJ) < 1e-12) {
-        throw std::runtime_error("Degenerate element detected");
+        throw std::runtime_error("Degenerate element detected -- определитель матрицы Якоби равен нулю: элемент состоит из вершин " + std::to_string(nodeIds_[0]) + ", " + std::to_string(nodeIds_[1]) + ", " + std::to_string(nodeIds_[2]));
     }
     
     // Градиенты функций формы (из теории МКЭ для линейных треугольников)
@@ -68,11 +68,11 @@ Eigen::Matrix<double, 2, 3> Element::computeShapeFunctionGradients(
 }
 
 Eigen::Matrix3d Element::computeLocalStiffnessMatrix(
-    const std::vector<Node>& nodes) const {
+    const std::vector<Node>& nodes, const std::unordered_map<int, int> &nodeIndexMap) const {
     
     if (localKComputed_) return localK_;
     
-    Eigen::Matrix<double, 2, 3> gradN = computeShapeFunctionGradients(nodes);
+    Eigen::Matrix<double, 2, 3> gradN = computeShapeFunctionGradients(nodes, nodeIndexMap);
     
     // Локальная матрица жёсткости: K_ij = ∫∫ ∇Ni · ∇Nj dV
     // Для линейных треугольников градиенты постоянны, поэтому:
@@ -93,12 +93,12 @@ Eigen::Matrix3d Element::computeLocalStiffnessMatrix(
 }
 
 Eigen::Matrix<double, 3, 2> Element::getNodeCoordinates(
-    const std::vector<Node>& nodes) const {
+    const std::vector<Node>& nodes, const std::unordered_map<int, int> &nodeIndexMap) const {
     
     Eigen::Matrix<double, 3, 2> coords;
     
     for (int i = 0; i < 3; ++i) {
-        const Node& node = nodes[nodeIds_[i]];
+        const Node& node = nodes[ nodeIndexMap.at(nodeIds_[i]) ];
         coords(i, 0) = node.getX();
         coords(i, 1) = node.getY();
     }

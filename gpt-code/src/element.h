@@ -23,19 +23,19 @@ public:
     double getArea() const { return area_; }
     
     // Вычисление геометрических характеристик
-    void computeGeometry(const std::vector<Node>& nodes);
+    void computeGeometry(const std::vector<Node>& nodes, const std::unordered_map<int, int> &nodeIndexMap);
     
     // Вычисление локальной матрицы жёсткости
     Eigen::Matrix3d computeLocalStiffnessMatrix(
-        const std::vector<Node>& nodes) const;
+        const std::vector<Node>& nodes, const std::unordered_map<int, int> &nodeIndexMap) const;
     
     // Вычисление градиентов функций формы
     Eigen::Matrix<double, 2, 3> computeShapeFunctionGradients(
-        const std::vector<Node>& nodes) const;
+        const std::vector<Node>& nodes, const std::unordered_map<int, int> &nodeIndexMap) const;
     
     // Получение координат узлов элемента
     Eigen::Matrix<double, 3, 2> getNodeCoordinates(
-        const std::vector<Node>& nodes) const;
+        const std::vector<Node>& nodes, const std::unordered_map<int, int> &nodeIndexMap) const;
     
 private:
     int id_ = -1;                           ///< ID элемента

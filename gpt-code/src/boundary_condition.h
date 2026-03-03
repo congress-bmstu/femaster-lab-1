@@ -30,7 +30,7 @@ public:
     void addBCConfig(const BCConfig& config);
     
     // Применение всех ГУ к сетке
-    void applyToMesh(Mesh& mesh, double U_inf, double H);
+    void applyToMesh(Mesh& mesh);
     
     // Получение списка узлов с условием Дирихле
     std::vector<int> getDirichletNodes() const { return dirichletNodes_; }
@@ -44,11 +44,7 @@ public:
 private:
     std::vector<BCConfig> configs_;           ///< Конфигурации ГУ
     std::vector<int> dirichletNodes_;         ///< Узлы с условием Дирихле
-    std::unordered_map<int, double> dirichletValues_; ///< Значения для узлов Дирихле
-    
-    // Вычисление полного потока Q = U_inf * H
-    void computeFlowRate(double U_inf, double H);
-    double Q_ = 0.0;  ///< Полный поток
+    std::unordered_map<int, double> dirichletValues_; ///< Значения для узлов Дирихле  
 };
 
 } // namespace fem

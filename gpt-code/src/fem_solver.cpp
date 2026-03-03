@@ -21,6 +21,7 @@ void FEMSolver::assembleStiffnessMatrix() {
     if (!mesh_ || !config_) return;
     
     const auto& nodes = mesh_->getNodes();
+    const auto& nodeIndexMap = mesh_->getNodeIndexMap();
     const auto& elements = mesh_->getElements();
     
     // Подсчёт ненулевых элементов для эффективного создания sparse матрицы
@@ -31,13 +32,13 @@ void FEMSolver::assembleStiffnessMatrix() {
         assembleElementContribution(element, nodes);
         
         // Получение локальной матрицы
-        Eigen::Matrix3d localK = element.computeLocalStiffnessMatrix(nodes);
+        Eigen::Matrix3d localK = element.computeLocalStiffnessMatrix(nodes, nodeIndexMap);
         const auto& nodeIds = element.getNodeIds();
         
         // Преобразование ID узлов в индексы
         std::vector<int> indices(3);
         for (int i = 0; i < 3; ++i) {
-            indices[i] = nodeIds[i] - 1;  // GMSH ID начинается с 1
+            indices[i] = nodeIndexMap.at(nodeIds[i]);
         }
         
         // Добавление в глобальную матрицу
@@ -56,35 +57,46 @@ void FEMSolver::assembleStiffnessMatrix() {
 void FEMSolver::assembleElementContribution(
     const Element& element,
     const std::vector<Node>& nodes) {
-    // В данной задаке вектор нагрузки F = 0 (уравнение Лапласа)
+    // В данной задаче вектор нагрузки F = 0 (уравнение Лапласа)
     // Метод оставлен для расширения на другие задачи
 }
 
 void FEMSolver::applyDirichletBoundaryConditions(
-    const BoundaryConditionManager& bcManager) {
-    
+        const BoundaryConditionManager& bcManager) {
+
     const auto& dirichletNodes = bcManager.getDirichletNodes();
-    
-    // Модификация матрицы и вектора для условий Дирихле
-    // Метод штрафных коэффициентов или прямая модификация
-    
+
+    const auto& nodeIndexMap = mesh_->getNodeIndexMap();
+
     for (int nodeId : dirichletNodes) {
-        int idx = nodeId - 1;  // Преобразование ID в индекс
+        int idx = nodeIndexMap.at(nodeId);
         double value = bcManager.getDirichletValue(nodeId);
         
         // Сохраняем значение для последующего использования
         psi_(idx) = value;
         
         // Прямая модификация строки и столбца матрицы
-        // K[idx, :] = 0, K[:, idx] = 0, K[idx, idx] = 1
-        // F[idx] = value
+        for (size_t j = 0; j < getNumDOF(); ++j) {
+            if(j == idx)
+                K_.coeffRef(idx, idx) = 1;
+            else
+                K_.coeffRef(idx, j) *= 0;
+        }
+        F_(idx) = value;
+
+        // Logger::info("К вершине " + std::to_string(nodeId) + " применено ГУ Дирихле со значенем " + std::to_string(value));
         
         // Для sparse матрицы используем другой подход
         // Добавляем большую величину на диагональ
-        double penalty = 1e20;
-        K_.coeffRef(idx, idx) += penalty;
-        F_(idx) += penalty * value;
+        // double penalty = 1e20;
+        // K_.coeffRef(idx, idx) += penalty;
+        // F_(idx) += penalty * value;
     }
+
+    K_.prune(0.0);
+    K_.makeCompressed();
+
+    Logger::info("Граничное условие Дирихле применено к "+std::to_string(dirichletNodes.size()) + " узлам!");
 }
 
 SolutionResult FEMSolver::solve() {
@@ -136,6 +148,7 @@ SolutionResult FEMSolver::solve() {
 
 void FEMSolver::computeVelocities(const Mesh& mesh) {
     const auto& nodes = mesh.getNodes();
+    const auto& nodeIndexMap = mesh_->getNodeIndexMap();
     const auto& elements = mesh.getElements();
     
     vx_.setZero();
@@ -150,12 +163,12 @@ void FEMSolver::computeVelocities(const Mesh& mesh) {
         
         const auto& nodeIds = element.getNodeIds();
         Eigen::Matrix<double, 2, 3> gradN = 
-            element.computeShapeFunctionGradients(nodes);
+            element.computeShapeFunctionGradients(nodes, nodeIndexMap);
         
         // Значения ψ в узлах элемента
         Eigen::Vector3d psiElem;
         for (int i = 0; i < 3; ++i) {
-            psiElem(i) = psi_(nodeIds[i] - 1);
+            psiElem(i) = psi_( nodeIndexMap.at(nodeIds[i]) );
         }
         
         // Градиент ψ в элементе
@@ -171,7 +184,7 @@ void FEMSolver::computeVelocities(const Mesh& mesh) {
         
         // Распределение по узлам (усреднение)
         for (int i = 0; i < 3; ++i) {
-            int idx = nodeIds[i] - 1;
+            int idx = nodeIndexMap.at(nodeIds[i]);
             vx_(idx) += vx_elem;
             vy_(idx) += vy_elem;
             nodeCount[idx]++;

@@ -14,4 +14,11 @@ Eigen::Vector2d Node::getCoordinates() const {
     return Eigen::Vector2d(x_, y_);
 }
 
+void Node::addTag(int tag) {
+    for(auto t : tags_)
+        if(t == tag)
+            return;
+    tags_.push_back(tag);
+}
+
 } // namespace fem

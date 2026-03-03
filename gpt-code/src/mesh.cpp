@@ -12,9 +12,9 @@ bool Mesh::loadFromGmsh(const std::string& filename) {
     }
     
     if (!parseGmshVersion(file)) return false;
+    if (!parsePhysicalGroups(file)) return false;
     if (!parseNodes(file)) return false;
     if (!parseElements(file)) return false;
-    if (!parsePhysicalGroups(file)) return false;
     
     file.close();
     return true;
@@ -88,12 +88,27 @@ bool Mesh::parseElements(std::ifstream& file) {
         int id, elementType, numTags;
         iss >> id >> elementType >> numTags;
         
+        std::vector<int> tags;
+
         // Пропускаем теги
         for (int j = 0; j < numTags; ++j) {
             int tag;
             iss >> tag;
+            tags.push_back(tag);
         }
         
+        if (elementType == 1) {
+            std::vector<int> nodeIds(2);
+            for(int j = 0; j < 2; ++j) {
+                iss >> nodeIds[j];
+            }
+
+            for(int tagIndex = 0; tagIndex < tags.size(); ++tagIndex) {
+                nodes_[ nodeIndexMap_[nodeIds[0]] ].addTag(tags[tagIndex]);
+                nodes_[ nodeIndexMap_[nodeIds[0]] ].addTag(tags[tagIndex]);
+            }
+        }
+
         // Тип 2 = треугольник в GMSH
         if (elementType == 2) {
             std::vector<int> nodeIds(3);
@@ -103,6 +118,8 @@ bool Mesh::parseElements(std::ifstream& file) {
             elements_.emplace_back(id, nodeIds);
         }
     }
+
+    Logger::info("Загружено "+std::to_string(numElements)+" элементов!");
     
     std::getline(file, line); // $EndElements
     return true;
@@ -138,6 +155,8 @@ bool Mesh::parsePhysicalGroups(std::ifstream& file) {
                 group.dimension = dim;
                 physicalGroups_[name] = group;
             }
+
+            Logger::info("Загружено "+std::to_string(numGroups)+" физических групп!");
             
             std::getline(file, line); // $EndPhysicalNames
             break;
@@ -146,6 +165,8 @@ bool Mesh::parsePhysicalGroups(std::ifstream& file) {
             break;
         }
     }
+
+
     
     return true;
 }
@@ -178,11 +199,12 @@ std::vector<int> Mesh::findElementsContainingNode(int nodeId) const {
     return elementIds;
 }
 
-std::vector<int> Mesh::getBoundaryNodeIds(const std::string& groupName) const {
+/* std::vector<int> Mesh::getBoundaryNodeIds(const std::string& groupName) const {
     std::vector<int> boundaryNodes;
     
     auto it = physicalGroups_.find(groupName);
     if (it == physicalGroups_.end()) {
+        Logger::warning("Physical group not found: " + groupName);
         return boundaryNodes;
     }
     
@@ -200,10 +222,34 @@ std::vector<int> Mesh::getBoundaryNodeIds(const std::string& groupName) const {
     
     return boundaryNodes;
 }
+*/
+
+std::vector<int> Mesh::getBoundaryNodeIds(const std::string& groupName) const {
+    std::vector<int> boundaryNodes;
+    
+    auto it = physicalGroups_.find(groupName);
+    if (it == physicalGroups_.end()) {
+        Logger::error("Physical group not found: " + groupName);
+        return boundaryNodes;
+    }
+    
+    const PhysicalGroup& group = it->second;
+
+    for (auto node : nodes_) {
+        for( auto tag : node.getTags() ) {
+            if(tag == group.tag) {
+                boundaryNodes.push_back(node.getId());
+                break;
+            }
+        }
+    }
+    
+    return boundaryNodes;
+}
 
 void Mesh::computeElementGeometries() {
     for (auto& element : elements_) {
-        element.computeGeometry(nodes_);
+        element.computeGeometry(nodes_, nodeIndexMap_);
     }
 }
 

@@ -7,13 +7,8 @@ void BoundaryConditionManager::addBCConfig(const BCConfig& config) {
     configs_.push_back(config);
 }
 
-void BoundaryConditionManager::computeFlowRate(double U_inf, double H) {
-    Q_ = U_inf * H;  // Полный поток
-}
-
-void BoundaryConditionManager::applyToMesh(Mesh& mesh, double U_inf, double H) {
-    computeFlowRate(U_inf, H);
-    
+void BoundaryConditionManager::applyToMesh(Mesh& mesh) {
+    Logger::info("Вызвана функция BoundaryConditionManager::applyToMesh(Mesh& mesh)");
     dirichletNodes_.clear();
     dirichletValues_.clear();
     
@@ -26,27 +21,21 @@ void BoundaryConditionManager::applyToMesh(Mesh& mesh, double U_inf, double H) {
             
             double value = config.value;
             
-            // Специальная обработка для симметрии
-            if (config.physicalGroup == "Cylinder") {
-                value = Q_ / 2.0;  // По симметрии
-            } else if (config.physicalGroup == "Walls") {
-                // Нижняя стенка: ψ = 0, Верхняя: ψ = Q
-                // Определяем по координате Y
-                if (node->getY() < H / 2.0) {
-                    value = 0.0;
-                } else {
-                    value = Q_;
-                }
-            }
-            
             if (config.type == BCType::DIRICHLET) {
                 node->setBC(BCType::DIRICHLET, value);
                 dirichletNodes_.push_back(nodeId);
                 dirichletValues_[nodeId] = value;
+
+                // Logger::info("К вершине " + std::to_string(nodeId + 1) + " применено ГУ Дирихле со значенем " + std::to_string(value));
             } else if (config.type == BCType::NEUMANN) {
                 node->setBC(BCType::NEUMANN, value);
             }
         }
+    }
+
+    for(auto node : dirichletNodes_) {
+        Logger::info("В bcManager: нода " + std::to_string(node) +
+                " значение " + std::to_string(getDirichletValue(node)) );
     }
 }
 
@@ -60,7 +49,7 @@ double BoundaryConditionManager::getDirichletValue(int nodeId) const {
     if (it != dirichletValues_.end()) {
         return it->second;
     }
-    return 10.0;
+    return -1600;
 }
 
 } // namespace fem

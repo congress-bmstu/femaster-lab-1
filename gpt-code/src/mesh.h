@@ -5,6 +5,7 @@
 #include <unordered_map>
 #include "node.h"
 #include "element.h"
+#include "utils.h"
 
 namespace fem {
 
@@ -34,6 +35,7 @@ public:
     // Геттеры
     const std::vector<Node>& getNodes() const { return nodes_; }
     const std::vector<Element>& getElements() const { return elements_; }
+    const std::unordered_map<int, int> getNodeIndexMap() const { return nodeIndexMap_; }
     const std::unordered_map<std::string, PhysicalGroup>& getPhysicalGroups() const;
     
     // Поиск узла по ID

@@ -51,7 +51,7 @@ int main(int argc, char* argv[]) {
     for (const auto& bcConfig : config.getBCConfigs()) {
         bcManager.addBCConfig(bcConfig);
     }
-    bcManager.applyToMesh(mesh, config.getUInf(), config.getH());
+    bcManager.applyToMesh(mesh);
     Logger::success("Boundary conditions applied");
     
     // Инициализация решателя
